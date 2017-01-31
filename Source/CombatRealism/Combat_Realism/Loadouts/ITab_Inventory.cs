@@ -148,52 +148,6 @@ namespace Combat_Realism
             GUI.EndGroup();
             GUI.color = Color.white;
             Text.Anchor = TextAnchor.UpperLeft;
-
-
-
-
-            // GUI.BeginGroup(listRect);
-            // Text.Font = GameFont.Small;
-            // GUI.color = Color.white;
-            // Rect outRect = new Rect(0f, 0f, listRect.width, listRect.height);
-            // Rect viewRect = new Rect(0f, 0f, listRect.width - 16f, this._scrollViewHeight);
-            // Widgets.BeginScrollView(outRect, ref this._scrollPosition, viewRect);
-            // float curY = 0f;
-            // if (this.SelPawnForGear.equipment != null)
-            // {
-            //     Widgets.ListSeparator(ref curY, viewRect.width, "Equipment".Translate());
-            //     foreach (ThingWithComps current in this.SelPawnForGear.equipment.AllEquipment)
-            //     {
-            //         this.DrawThingRow(ref curY, viewRect.width, current);
-            //     }
-            // }
-            // if (this.SelPawnForGear.apparel != null)
-            // {
-            //     Widgets.ListSeparator(ref curY, viewRect.width, "Apparel".Translate());
-            //     foreach (Apparel current2 in from ap in this.SelPawnForGear.apparel.WornApparel
-            //                                  orderby ap.def.apparel.bodyPartGroups[0].listOrder descending
-            //                                  select ap)
-            //     {
-            //         this.DrawThingRow(ref curY, viewRect.width, current2);
-            //     }
-            // }
-            // if (this.SelPawnForGear.inventory != null)
-            // {
-            //     Widgets.ListSeparator(ref curY, viewRect.width, "Inventory".Translate());
-            //     foreach (Thing current3 in this.SelPawnForGear.inventory.container)
-            //     {
-            //         this.DrawThingRow(ref curY, viewRect.width, current3);
-            //     }
-            // }
-            // if (Event.current.type == EventType.Layout)
-            // {
-            //     this._scrollViewHeight = curY + 30f;
-            // }
-            // Widgets.EndScrollView();
-            // GUI.EndGroup();
-            //
-            // GUI.color = Color.white;
-            // Text.Anchor = TextAnchor.UpperLeft;
         }
 
         private void DrawThingRow(ref float y, float width, Thing thing)
@@ -296,9 +250,7 @@ namespace Combat_Realism
                             floatOptionList.Add(equipOption);
                         }
                     }
-
                     // Drop option
-
                     Action dropApparel = delegate
                     {
                         SoundDefOf.TickHigh.PlayOneShotOnCamera();
@@ -309,149 +261,22 @@ namespace Combat_Realism
                         SoundDefOf.TickHigh.PlayOneShotOnCamera();
                         InterfaceDropHaul(thing);
                     };
-                    Action eatFood = delegate
+                    if (this.CanControl && thing.def.IsNutritionGivingIngestible && thing.IngestibleNow && base.SelPawn.RaceProps.CanEverEat(thing))
                     {
-                        SoundDefOf.TickHigh.PlayOneShotOnCamera();
-                        InterfaceEatThis(thing);
-                    };
-                    floatOptionList.Add(new FloatMenuOption("CR_Eat".Translate(), eatFood));
+                        Action eatFood = delegate
+                        {
+                            SoundDefOf.TickHigh.PlayOneShotOnCamera();
+                            InterfaceEatThis(thing);
+                        };
+                        floatOptionList.Add(new FloatMenuOption("CR_Eat".Translate(), eatFood));
+                    }
                     floatOptionList.Add(new FloatMenuOption("DropThing".Translate(), dropApparel));
                     floatOptionList.Add(new FloatMenuOption("CR_DropThingHaul".Translate(), dropApparelHaul));
-
-                  //Action action = null;
-                  //Apparel ap = thing as Apparel;
-                  //if (ap != null && SelPawnForGear.apparel.WornApparel.Contains(ap))
-                  //{
-                  //    Apparel unused;
-                  //    action = delegate
-                  //    {
-                  //        this.SelPawnForGear.apparel.TryDrop(ap, out unused, this.SelPawnForGear.Position, true);
-                  //    };
-                  //}
-                  //else if (eq != null && this.SelPawnForGear.equipment.AllEquipment.Contains(eq))
-                  //{
-                  //    ThingWithComps unused;
-                  //    action = delegate
-                  //    {
-                  //        this.SelPawnForGear.equipment.TryDropEquipment(eq, out unused, this.SelPawnForGear.Position, true);
-                  //    };
-                  //}
-                  //else if (!thing.def.destroyOnDrop)
-                  //{
-                  //    Thing unused;
-                  //    action = delegate
-                  //    {
-                  //        this.SelPawnForGear.inventory.container.TryDrop(thing, this.SelPawnForGear.Position, ThingPlaceMode.Near, out unused);
-                  //    };
-                  //}
-                  //floatOptionList.Add(new FloatMenuOption("DropThing".Translate(), action, MenuOptionPriority.Medium, null, null));
                 }
                 FloatMenu window = new FloatMenu(floatOptionList, thing.LabelCap, false);
                 Find.WindowStack.Add(window);
             }
             // end menu
-
-
-            // OLD
-
-            //if (Mouse.IsOver(rect))
-            //{
-            //    GUI.color = _highlightColor;
-            //    GUI.DrawTexture(rect, TexUI.HighlightTex);
-            //}
-            //if (Widgets.ButtonInvisible(rect) && Event.current.button == 1)
-            //{
-            //    List<FloatMenuOption> floatOptionList = new List<FloatMenuOption>();
-            //    floatOptionList.Add(new FloatMenuOption("ThingInfo".Translate(), delegate
-            //    {
-            //        Find.WindowStack.Add(new Dialog_InfoCard(thing));
-            //    }, MenuOptionPriority.Medium, null, null));
-            //    if (this.CanControl)
-            //    {
-            //        // Equip option
-            //        ThingWithComps eq = thing as ThingWithComps;
-            //        if (eq != null && eq.TryGetComp<CompEquippable>() != null)
-            //        {
-            //            CompInventory compInventory = SelPawnForGear.TryGetComp<CompInventory>();
-            //            if (compInventory != null)
-            //            {
-            //                FloatMenuOption equipOption;
-            //                string eqLabel = GenLabel.ThingLabel(eq.def, eq.Stuff, 1);
-            //                if (SelPawnForGear.equipment.AllEquipment.Contains(eq) && SelPawnForGear.inventory != null)
-            //                {
-            //                    equipOption = new FloatMenuOption("CR_PutAway".Translate(new object[] { eqLabel }),
-            //                        new Action(delegate
-            //                        {
-            //                            ThingWithComps oldEq;
-            //                            SelPawnForGear.equipment.TryTransferEquipmentToContainer(SelPawnForGear.equipment.Primary, SelPawnForGear.inventory.container, out oldEq);
-            //                        }));
-            //                }
-            //                else if (!SelPawnForGear.health.capacities.CapableOf(PawnCapacityDefOf.Manipulation))
-            //                {
-            //                    equipOption = new FloatMenuOption("CannotEquip".Translate(new object[] { eqLabel }), null);
-            //                }
-            //                else
-            //                {
-            //                    string equipOptionLabel = "Equip".Translate(new object[] { eqLabel });
-            //                    if (eq.def.IsRangedWeapon && SelPawnForGear.story != null && SelPawnForGear.story.traits.HasTrait(TraitDefOf.Brawler))
-            //                    {
-            //                        equipOptionLabel = equipOptionLabel + " " + "EquipWarningBrawler".Translate();
-            //                    }
-            //                    equipOption = new FloatMenuOption(equipOptionLabel, new Action(delegate
-            //                    {
-            //                        compInventory.TrySwitchToWeapon(eq);
-            //                    }));
-            //                }
-            //                floatOptionList.Add(equipOption);
-            //            }
-            //        }
-            //
-            //        // Drop option
-            //        Action action = null;
-            //        Apparel ap = thing as Apparel;
-            //        if (ap != null && SelPawnForGear.apparel.WornApparel.Contains(ap))
-            //        {
-            //            Apparel unused;
-            //            action = delegate
-            //            {
-            //                this.SelPawnForGear.apparel.TryDrop(ap, out unused, this.SelPawnForGear.Position, true);
-            //            };
-            //        }
-            //        else if (eq != null && this.SelPawnForGear.equipment.AllEquipment.Contains(eq))
-            //        {
-            //            ThingWithComps unused;
-            //            action = delegate
-            //            {
-            //                this.SelPawnForGear.equipment.TryDropEquipment(eq, out unused, this.SelPawnForGear.Position, true);
-            //            };
-            //        }
-            //        else if (!thing.def.destroyOnDrop)
-            //        {
-            //            Thing unused;
-            //            action = delegate
-            //            {
-            //                this.SelPawnForGear.inventory.container.TryDrop(thing, this.SelPawnForGear.Position, ThingPlaceMode.Near, out unused);
-            //            };
-            //        }
-            //        floatOptionList.Add(new FloatMenuOption("DropThing".Translate(), action, MenuOptionPriority.Medium, null, null));
-            //    }
-            //    FloatMenu window = new FloatMenu(floatOptionList, thing.LabelCap, false);
-            //    Find.WindowStack.Add(window);
-            //}
-            //if (thing.def.DrawMatSingle != null && thing.def.DrawMatSingle.mainTexture != null)
-            //{
-            //    Widgets.ThingIcon(new Rect(4f, y, 28f, 28f), thing);
-            //}
-            //Text.Anchor = TextAnchor.MiddleLeft;
-            //GUI.color = _thingLabelColor;
-            //Rect rect2 = new Rect(_thingLeftX, y, width - _thingLeftX, 28f);
-            //string text = thing.LabelCap;
-            //if (thing is Apparel && this.SelPawnForGear.outfits != null && this.SelPawnForGear.outfits.forcedHandler.IsForced((Apparel)thing))
-            //{
-            //    text = text + ", " + "ApparelForcedLower".Translate();
-            //}
-            //Widgets.Label(rect2, text);
-            //y += 28f;
         }
 
         // RimWorld.ITab_Pawn_Gear

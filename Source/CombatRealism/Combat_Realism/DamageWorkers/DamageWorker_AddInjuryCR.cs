@@ -81,12 +81,12 @@ namespace Combat_Realism
 				}
 				if (pawn.inventory != null)
 				{
-					ThingContainer container = pawn.inventory.innerContainer;
-					for (int j = container.Count - 1; j >= 0; j--)
-					{
-						CheckApplySpreadDamage(dinfo, container[j]);
-					}
-				}
+                    ThingContainer innerContainer = pawn.inventory.innerContainer;
+                    for (int j = innerContainer.Count - 1; j >= 0; j--)
+                    {
+                        this.CheckApplySpreadDamage(dinfo, innerContainer[j]);
+                    }
+                }
 			}
 			if (!FragmentDamageForDamageType(dinfo, pawn, ref localInjuryResult))
 			{

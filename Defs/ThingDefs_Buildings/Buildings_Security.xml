@@ -172,6 +172,9 @@
     <tradeTags>
       <li>CR_Turret</li>
     </tradeTags>
+    <researchPrerequisites>
+      <li>GunTurrets</li>
+    </researchPrerequisites>
   </ThingDef>
 
   <!--=============== 81mm mortar ===============-->
