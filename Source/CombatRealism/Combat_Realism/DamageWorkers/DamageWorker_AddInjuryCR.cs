@@ -128,11 +128,11 @@ namespace Combat_Realism
 
 		private void CheckApplySpreadDamage(DamageInfo dinfo, Thing t)
 		{
-			if (UnityEngine.Random.value < 0.5f)
-			{
-				dinfo.SetAmount(Mathf.CeilToInt((float)dinfo.Amount * Rand.Range(0.35f, 0.7f)));
-				t.TakeDamage(dinfo);
-			}
+            if (UnityEngine.Random.value < 0.5f && t != null)
+            {
+                dinfo.SetAmount(Mathf.CeilToInt((float)dinfo.Amount * Rand.Range(0.35f, 0.7f)));
+                t.TakeDamage(dinfo);
+            }
 		}
 
 		private bool FragmentDamageForDamageType(DamageInfo dinfo, Pawn pawn, ref LocalInjuryResult result)

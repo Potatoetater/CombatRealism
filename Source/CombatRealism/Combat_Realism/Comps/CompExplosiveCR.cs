@@ -29,8 +29,13 @@ namespace Combat_Realism
         /// <param name="instigator">Launcher of the projectile calling the method</param>
 		public virtual void Explode(Thing instigator, IntVec3 pos, Map map)
         {
+            if (map == null)
+            {
+                Log.Warning("Tried to do explodeCR in a null map.");
+                return;
+            }
             // Regular explosion stuff
-            if (Props.explosionRadius > 0 && Props.explosionDamage > 0)
+            if (Props.explosionRadius > 0 && Props.explosionDamage > 0 && parent.def != null && GenGrid.InBounds(pos, map))
             {
                 GenExplosion.DoExplosion
                     (pos,
@@ -41,16 +46,16 @@ namespace Combat_Realism
                     Props.soundExplode == null ? Props.explosionDamageDef.soundExplosion : Props.soundExplode,
                     parent.def, 
                     null,
-                    Props.postExplosionSpawnThingDef,
-                    Props.explosionSpawnChance, 
-                    1, 
-                    Props.applyDamageToExplosionCellsNeighbors, 
-                    Props.preExplosionSpawnThingDef, 
-                    Props.explosionSpawnChance,
-                    1);
+                    Props.postExplosionSpawnThingDef = null,
+                    Props.postExplosionSpawnChance = 0f,
+                    Props.postExplosionSpawnThingCount = 1, 
+                    Props.applyDamageToExplosionCellsNeighbors = false, 
+                    Props.preExplosionSpawnThingDef = null, 
+                    Props.explosionSpawnChance = 0,
+                    Props.preExplosionSpawnThingCount);
             }
             // Fragmentation stuff
-            if (!Props.fragments.NullOrEmpty())
+            if (!Props.fragments.NullOrEmpty() && GenGrid.InBounds(pos, map))
             {
                 if (Props.fragRange <= 0)
                 {

@@ -56,11 +56,16 @@ namespace Combat_Realism
                 1,
                 false, // propsCR == null ? false : propsCR.damageAdjacentTiles,
                 preExplosionSpawnThingDef,
-                this.def.projectile.explosionSpawnChance,
+                explosionSpawnChance,
                 1);
-            ThrowBigExplode(base.Position.ToVector3Shifted() + Gen.RandomHorizontalVector(def.projectile.explosionRadius * 0.5f), base.Map, def.projectile.explosionRadius * 0.4f);
+
+            if (map != null && base.Position.IsValid)
+            {
+                ThrowBigExplode(base.Position.ToVector3Shifted() + Gen.RandomHorizontalVector(def.projectile.explosionRadius * 0.5f), base.Map, def.projectile.explosionRadius * 0.4f);
+            }
+
             CompExplosiveCR comp = this.TryGetComp<CompExplosiveCR>();
-            if (comp != null)
+            if (comp != null && this.launcher != null && this.Position.IsValid)
             {
                 comp.Explode(launcher, this.Position, Find.VisibleMap);
             }

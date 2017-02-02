@@ -11,15 +11,22 @@ namespace Combat_Realism
     public class CompProperties_ExplosiveCR : CompProperties
     {
         public float explosionDamage = -1;
-        public DamageDef explosionDamageDef;
-        public float explosionRadius = 0f;
-        public ThingDef preExplosionSpawnThingDef;
-        public ThingDef postExplosionSpawnThingDef;
-        public float explosionSpawnChance = 1f;
-        public SoundDef soundExplode;
         public List<ThingCountClass> fragments = new List<ThingCountClass>();
         public float fragRange = 0f;
+
+        public float explosionRadius = 0f;
+        public DamageDef explosionDamageDef = DamageDefOf.Bomb;
+        // instigator
+        public SoundDef soundExplode = null;
+        // projectile = parent.def
+        // source = null
+        public ThingDef postExplosionSpawnThingDef = null;
+        public float postExplosionSpawnChance = 0;
+        public int postExplosionSpawnThingCount = 1;
         public bool applyDamageToExplosionCellsNeighbors = false;
+        public ThingDef preExplosionSpawnThingDef = null;
+        public float explosionSpawnChance = 0;
+        public int preExplosionSpawnThingCount = 1;
 
         public CompProperties_ExplosiveCR()
         {

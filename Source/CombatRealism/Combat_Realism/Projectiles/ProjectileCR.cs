@@ -139,6 +139,13 @@ namespace Combat_Realism
             return height;
         }
 
+        //Added new method, takes Vector3 destination as argument
+        public void Launch(Thing launcher, Vector3 origin, LocalTargetInfo targ, Vector3 target, Thing equipment = null)
+        {
+            destination = target;
+            Launch(launcher, origin, targ, equipment);
+        }
+
         //Added new calculations for downed pawns, destination
         public virtual void Launch(Thing launcher, Vector3 origin, LocalTargetInfo targ, Thing equipment = null)
         {
@@ -174,13 +181,6 @@ namespace Combat_Realism
                 SoundInfo info = SoundInfo.InMap(this, MaintenanceType.PerTick);
                 ambientSustainer = def.projectile.soundAmbient.TrySpawnSustainer(info);
             }
-        }
-
-        //Added new method, takes Vector3 destination as argument
-        public void Launch(Thing launcher, Vector3 origin, LocalTargetInfo targ, Vector3 target, Thing equipment = null)
-        {
-            destination = target;
-            Launch(launcher, origin, targ, equipment);
         }
 
         //Removed minimum collision distance
@@ -240,6 +240,150 @@ namespace Combat_Realism
                 return true;
             }
             return false;
+        }
+
+        /// <summary>
+        ///     Takes into account the target being downed and the projectile having been fired while the target was downed, and
+        ///     the target's bodySize
+        /// </summary>
+        private bool ImpactThroughBodySize(Thing thing, float height)
+        {
+            Pawn pawn = thing as Pawn;
+
+            if (pawn != null)
+            {
+                PersonalShield shield = null;
+                if (pawn.RaceProps.Humanlike)
+                {
+                    // check for shield user
+
+                    List<Apparel> wornApparel = pawn.apparel.WornApparel;
+                    for (int i = 0; i < wornApparel.Count; i++)
+                    {
+                        if (wornApparel[i] is PersonalShield)
+                        {
+                            shield = (PersonalShield)wornApparel[i];
+                            break;
+                        }
+                    }
+                }
+                //Add suppression
+                CompSuppressable compSuppressable = pawn.TryGetComp<CompSuppressable>();
+                if (compSuppressable != null)
+                {
+                    if (shield == null || (shield != null && shield?.ShieldState == ShieldState.Resetting))
+                    {
+                        /*
+                        if (pawn.skills.GetSkill(SkillDefOf.Shooting).level >= 1)
+                        {
+                            suppressionAmount = (def.projectile.damageAmountBase * (1f - ((pawn.skills.GetSkill(SkillDefOf.Shooting).level) / 100) * 3));
+                        }
+                        else suppressionAmount = def.projectile.damageAmountBase;
+                        */
+                        suppressionAmount = def.projectile.damageAmountBase;
+                        ProjectilePropertiesCR propsCR = def.projectile as ProjectilePropertiesCR;
+                        float penetrationAmount = propsCR == null ? 0f : propsCR.armorPenetration;
+                        suppressionAmount *= 1 - Mathf.Clamp(compSuppressable.parentArmor - penetrationAmount, 0, 1);
+                        compSuppressable.AddSuppression(suppressionAmount, origin.ToIntVec3());
+                    }
+                }
+
+                //Check horizontal distance
+                Vector3 dest = destination;
+                Vector3 orig = origin;
+                Vector3 pawnPos = pawn.DrawPos;
+                float closestDistToPawn = Math.Abs((dest.z - orig.z) * pawnPos.x - (dest.x - orig.x) * pawnPos.z +
+                                                 dest.x * orig.z - dest.z * orig.x)
+                                        /
+                                        (float)
+                                            Math.Sqrt((dest.z - orig.z) * (dest.z - orig.z) +
+                                                      (dest.x - orig.x) * (dest.x - orig.x));
+                if (closestDistToPawn <= CR_Utility.GetCollisionWidth(pawn))
+                {
+                    //Check vertical distance
+                    float pawnHeight = CR_Utility.GetCollisionHeight(pawn);
+                    if (height < pawnHeight)
+                    {
+                        Impact(thing);
+                        return true;
+                    }
+                }
+            }
+            if (thing.def.fillPercent > 0 || thing.def.Fillage == FillCategory.Full)
+            {
+                if (height < CR_Utility.GetCollisionHeight(thing) || thing.def.Fillage == FillCategory.Full)
+                {
+                    Impact(thing);
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        //Unmodified
+        public void Launch(Thing launcher, LocalTargetInfo targ, Thing equipment = null)
+        {
+            Launch(launcher, Position.ToVector3Shifted(), targ, equipment);
+        }
+
+        //Unmodified
+        public override void Tick()
+        {
+            base.Tick();
+            if (landed)
+            {
+                return;
+            }
+            Vector3 exactPosition = ExactPosition;
+            ticksToImpact--;
+            if (!ExactPosition.InBounds(base.Map))
+            {
+                ticksToImpact++;
+                Position = ExactPosition.ToIntVec3();
+                Destroy(DestroyMode.Vanish);
+                return;
+            }
+            Vector3 exactPosition2 = ExactPosition;
+            if (!def.projectile.flyOverhead && canFreeIntercept &&
+                CheckForFreeInterceptBetween(exactPosition, exactPosition2))
+            {
+                return;
+            }
+            Position = ExactPosition.ToIntVec3();
+            if (ticksToImpact == 60f && Find.TickManager.CurTimeSpeed == TimeSpeed.Normal &&
+                def.projectile.soundImpactAnticipate != null)
+            {
+                def.projectile.soundImpactAnticipate.PlayOneShot(this);
+            }
+            if (ticksToImpact <= 0)
+            {
+                if (DestinationCell.InBounds(base.Map))
+                {
+                    Position = DestinationCell;
+                }
+                ImpactSomething();
+                return;
+            }
+            if (ambientSustainer != null)
+            {
+                ambientSustainer.Maintain();
+            }
+            // attack shooting expression
+            if (this.launcher is Building_TurretGunCR == false)
+            {
+                if (Rand.Value > 0.7
+                    && this.launcher.def.race.Humanlike
+                    && !robotBodyList.Contains(this.launcher.def.race.body.defName)
+                    && Gen.IsHashIntervalTick(launcher, Rand.Range(280, 700)))
+                {
+                    AGAIN: string rndswear = RulePackDef.Named("AttackMote").Rules.RandomElement().Generate();
+                    if (rndswear == "[swear]" || rndswear == "" || rndswear == " ")
+                    {
+                        goto AGAIN;
+                    }
+                    MoteMaker.ThrowText(launcher.Position.ToVector3Shifted(), this.launcher.Map, rndswear);
+                }
+            }
         }
 
         //Added collision detection for cover objects, changed pawn collateral chances
@@ -331,84 +475,11 @@ namespace Combat_Realism
             return false;
         }
 
-
-
-        /// <summary>
-        ///     Takes into account the target being downed and the projectile having been fired while the target was downed, and
-        ///     the target's bodySize
-        /// </summary>
-        private bool ImpactThroughBodySize(Thing thing, float height)
+        //Unmodified
+        public override void Draw()
         {
-            Pawn pawn = thing as Pawn;
-
-            if (pawn != null)
-            {
-                PersonalShield shield = null;
-                if (pawn.RaceProps.Humanlike)
-                {
-                    // check for shield user
-
-                    List<Apparel> wornApparel = pawn.apparel.WornApparel;
-                    for (int i = 0; i < wornApparel.Count; i++)
-                    {
-                        if (wornApparel[i] is PersonalShield)
-                        {
-                            shield = (PersonalShield)wornApparel[i];
-                            break;
-                        }
-                    }
-                }
-                //Add suppression
-                CompSuppressable compSuppressable = pawn.TryGetComp<CompSuppressable>();
-                if (compSuppressable != null)
-                {
-                    if (shield == null || (shield != null && shield?.ShieldState == ShieldState.Resetting))
-                    {
-                        /*
-                        if (pawn.skills.GetSkill(SkillDefOf.Shooting).level >= 1)
-                        {
-                            suppressionAmount = (def.projectile.damageAmountBase * (1f - ((pawn.skills.GetSkill(SkillDefOf.Shooting).level) / 100) * 3));
-                        }
-                        else suppressionAmount = def.projectile.damageAmountBase;
-                        */
-                        suppressionAmount = def.projectile.damageAmountBase;
-                        ProjectilePropertiesCR propsCR = def.projectile as ProjectilePropertiesCR;
-                        float penetrationAmount = propsCR == null ? 0f : propsCR.armorPenetration;
-                        suppressionAmount *= 1 - Mathf.Clamp(compSuppressable.parentArmor - penetrationAmount, 0, 1);
-                        compSuppressable.AddSuppression(suppressionAmount, origin.ToIntVec3());
-                    }
-                }
-
-                //Check horizontal distance
-                Vector3 dest = destination;
-                Vector3 orig = origin;
-                Vector3 pawnPos = pawn.DrawPos;
-                float closestDistToPawn = Math.Abs((dest.z - orig.z) * pawnPos.x - (dest.x - orig.x) * pawnPos.z +
-                                                 dest.x * orig.z - dest.z * orig.x)
-                                        /
-                                        (float)
-                                            Math.Sqrt((dest.z - orig.z) * (dest.z - orig.z) +
-                                                      (dest.x - orig.x) * (dest.x - orig.x));
-                if (closestDistToPawn <= CR_Utility.GetCollisionWidth(pawn))
-                {
-                    //Check vertical distance
-                    float pawnHeight = CR_Utility.GetCollisionHeight(pawn);
-                    if (height < pawnHeight)
-                    {
-                        Impact(thing);
-                        return true;
-                    }
-                }
-            }
-            if (thing.def.fillPercent > 0 || thing.def.Fillage == FillCategory.Full)
-            {
-                if (height < CR_Utility.GetCollisionHeight(thing) || thing.def.Fillage == FillCategory.Full)
-                {
-                    Impact(thing);
-                    return true;
-                }
-            }
-            return false;
+            Graphics.DrawMesh(MeshPool.plane10, DrawPos, ExactRotation, def.DrawMatSingle, 0);
+            Comps_PostDraw();
         }
 
         //Modified collision with downed pawns
@@ -418,14 +489,20 @@ namespace Combat_Realism
             if (def.projectile.flyOverhead)
             {
                 RoofDef roofDef = base.Map.roofGrid.RoofAt(base.Position);
-                if (roofDef != null && roofDef.isThickRoof)
+                if (roofDef != null)
                 {
-                    def.projectile.soundHitThickRoof.PlayOneShot(new TargetInfo(base.Position, base.Map, false));
-                    Destroy(DestroyMode.Vanish);
-                    return;
+                    if (roofDef.isThickRoof)
+                    {
+                        this.def.projectile.soundHitThickRoof.PlayOneShot(new TargetInfo(base.Position, base.Map, false));
+                        this.Destroy(DestroyMode.Vanish);
+                        return;
+                    }
+                    if (base.Position.GetEdifice(base.Map) == null || base.Position.GetEdifice(base.Map).def.Fillage != FillCategory.Full)
+                    {
+                        RoofCollapserImmediate.DropRoofInCells(base.Position, base.Map);
+                    }
                 }
             }
-
             //Modified
             if (assignedTarget != null && assignedTarget.Position == Position)
             //it was aimed at something and that something is still there
@@ -461,83 +538,10 @@ namespace Combat_Realism
         }
 
         //Unmodified
-        public void Launch(Thing launcher, LocalTargetInfo targ, Thing equipment = null)
-        {
-            Launch(launcher, Position.ToVector3Shifted(), targ, equipment);
-        }
-
-        //Unmodified
-        public override void Tick()
-        {
-            base.Tick();
-            if (landed)
-            {
-                return;
-            }
-            Vector3 exactPosition = ExactPosition;
-            ticksToImpact--;
-            if (!ExactPosition.InBounds(base.Map))
-            {
-                ticksToImpact++;
-                Position = ExactPosition.ToIntVec3();
-                Destroy(DestroyMode.Vanish);
-                return;
-            }
-            Vector3 exactPosition2 = ExactPosition;
-            if (!def.projectile.flyOverhead && canFreeIntercept &&
-                CheckForFreeInterceptBetween(exactPosition, exactPosition2))
-            {
-                return;
-            }
-            Position = ExactPosition.ToIntVec3();
-            if (ticksToImpact == 60f && Find.TickManager.CurTimeSpeed == TimeSpeed.Normal &&
-                def.projectile.soundImpactAnticipate != null)
-            {
-                def.projectile.soundImpactAnticipate.PlayOneShot(this);
-            }
-            if (ticksToImpact <= 0)
-            {
-                if (DestinationCell.InBounds(base.Map))
-                {
-                    Position = DestinationCell;
-                }
-                ImpactSomething();
-                return;
-            }
-            if (ambientSustainer != null)
-            {
-                ambientSustainer.Maintain();
-            }
-            // attack shooting expression
-            if (this.launcher is Building_TurretGunCR == false)
-            {
-                if (Rand.Value > 0.7
-                    && this.launcher.def.race.Humanlike
-                    && !robotBodyList.Contains(this.launcher.def.race.body.defName)
-                    && Gen.IsHashIntervalTick(launcher, Rand.Range(280, 700)))
-                {
-                    AGAIN: string rndswear = RulePackDef.Named("AttackMote").Rules.RandomElement().Generate();
-                    if (rndswear == "[swear]" || rndswear == "" || rndswear == " ")
-                    {
-                        goto AGAIN;
-                    }
-                    MoteMaker.ThrowText(launcher.Position.ToVector3Shifted(), this.launcher.Map, rndswear);
-                }
-            }
-        }
-
-        //Unmodified
-        public override void Draw()
-        {
-            Graphics.DrawMesh(MeshPool.plane10, DrawPos, ExactRotation, def.DrawMatSingle, 0);
-            Comps_PostDraw();
-        }
-
-        //Unmodified
         protected virtual void Impact(Thing hitThing)
         {
             CompExplosiveCR comp = this.TryGetComp<CompExplosiveCR>();
-            if (comp != null)
+            if (comp != null && launcher != null && this.Position.IsValid)
             {
                 comp.Explode(launcher, Position, Find.VisibleMap);
             }
@@ -547,14 +551,14 @@ namespace Combat_Realism
         //Unmodified
         public void ForceInstantImpact()
         {
-            if (!DestinationCell.InBounds(base.Map))
+            if (!this.DestinationCell.InBounds(base.Map))
             {
                 Destroy(DestroyMode.Vanish);
                 return;
             }
-            ticksToImpact = 0;
-            Position = DestinationCell;
-            ImpactSomething();
+            this.ticksToImpact = 0;
+            base.Position = DestinationCell;
+            this.ImpactSomething();
         }
     }
 }

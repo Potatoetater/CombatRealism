@@ -27,7 +27,7 @@ namespace Combat_Realism
         public override void ExplosionAffectCell(Explosion explosion, IntVec3 c, List<Thing> damagedThings, bool canThrowMotes)
         {
             base.ExplosionAffectCell(explosion, c, damagedThings, canThrowMotes);
-            if (def == DamageDefOf.Flame)
+            if (def == DamageDefOf.Flame && c.IsValid && explosion.Map != null)
             {
                 FireUtility.TryStartFireIn(c, explosion.Map, Rand.Range(0.2f, 0.6f));
             }
