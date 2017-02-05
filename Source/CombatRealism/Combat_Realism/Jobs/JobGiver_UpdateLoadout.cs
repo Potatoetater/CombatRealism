@@ -59,7 +59,7 @@ namespace Combat_Realism
                     {
                         ItemPriority curPriority = ItemPriority.None;
                         Thing curThing = null;
-                        int numCarried = inventory.container.TotalStackCountOfDef(curSlot.Def);
+                        int numCarried = inventory.container.Count(t => t.GetInnerIfMinified().def == curSlot.Def);
 
                         // Add currently equipped gun
                         if (pawn.equipment != null && pawn.equipment.Primary != null)
@@ -142,7 +142,7 @@ namespace Combat_Realism
                     {
                         return true;
                     }
-                    int numContained = inventory.container.TotalStackCountOfDef(thing.def);
+                    int numContained = inventory.container.Count(t => t.GetInnerIfMinified().def == thing.def);
 
                     // Add currently equipped gun
                     if (pawn.equipment != null && pawn.equipment.Primary != null)
@@ -173,7 +173,7 @@ namespace Combat_Realism
                 // Find and drop excess items
                 foreach (LoadoutSlot slot in loadout.Slots)
                 {
-                    int numContained = inventory.container.TotalStackCountOfDef(slot.Def);
+                    int numContained = inventory.container.Count(t => t.GetInnerIfMinified().def == slot.Def);
 
                     // Add currently equipped gun
                     if (pawn.equipment != null && pawn.equipment.Primary != null)
@@ -242,7 +242,7 @@ namespace Combat_Realism
                         return new Job(JobDefOf.Equip, closestThing);
                     }
                     // Take items into inventory if needed
-                    int numContained = inventory.container.TotalStackCountOfDef(prioritySlot.Def);
+                    int numContained = inventory.container.Count(t => t.GetInnerIfMinified().def == prioritySlot.Def);
                     return new Job(JobDefOf.TakeInventory, closestThing) { count = Mathf.Min(closestThing.stackCount, prioritySlot.Count - numContained, count) };
                 }
             }
