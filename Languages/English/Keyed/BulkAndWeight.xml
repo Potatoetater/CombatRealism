@@ -23,6 +23,7 @@
 	<CR.SourceRangedTip>Select ranged weapons</CR.SourceRangedTip>
 	<CR.SourceMeleeTip>Select melee weapons</CR.SourceMeleeTip>
 	<CR.SourceAmmoTip>Select ammo</CR.SourceAmmoTip>
+	<CR.SourceMinifiedTip>Select minified</CR.SourceMinifiedTip>
 	<CR.SourceAllTip>Select all</CR.SourceAllTip>
 	<CR.SourceFilterTip>Filter selection</CR.SourceFilterTip>
 	<CR.DragToReorder>Drag handle to reorder</CR.DragToReorder>
