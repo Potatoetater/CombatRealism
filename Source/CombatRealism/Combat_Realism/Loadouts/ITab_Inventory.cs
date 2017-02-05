@@ -344,7 +344,9 @@ namespace Combat_Realism
             else if (!t.def.destroyOnDrop)
             {
                 Thing thing;
-                this.SelPawnForGear.inventory.innerContainer.TryDrop(t, this.SelPawnForGear.Position, this.SelPawnForGear.Map, ThingPlaceMode.Near, out thing, null);
+                this.SelPawnForGear.inventory.innerContainer.TryDrop(
+                	t.def.Minifiable ? this.SelPawnForGear.inventory.innerContainer.FirstOrDefault(x => x.GetInnerIfMinified().ThingID == t.ThingID) : t, 
+                	this.SelPawnForGear.Position, this.SelPawnForGear.Map, ThingPlaceMode.Near, out thing, null);
             }
         }
 
