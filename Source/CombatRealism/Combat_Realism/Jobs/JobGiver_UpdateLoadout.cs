@@ -41,6 +41,21 @@ namespace Combat_Realism
 
             return 9.2f;
         }
+        
+        /* InventoryCountDefs
+         * If the ThingDef is minifiable, search the container for how many minified objects are contained.
+		 * fallback to TotalStackCountOfDef for non-minifiable things.
+		 */
+        private int InventoryCountDefs(ThingContainer container, ThingDef def) {
+			int count = 0;
+			if (def.Minifiable)
+			{
+				count = container.Count(t => t.GetInnerIfMinified().def == def);
+			} else {
+				count = container.TotalStackCountOfDef(def);
+			}
+			return count;
+        }
 
         private LoadoutSlot GetPrioritySlot(Pawn pawn, out ItemPriority priority, out Thing closestThing, out int count)
         {
@@ -59,7 +74,8 @@ namespace Combat_Realism
                     {
                         ItemPriority curPriority = ItemPriority.None;
                         Thing curThing = null;
-                        int numCarried = inventory.container.Count(t => t.GetInnerIfMinified().def == curSlot.Def);
+                        
+                        int numCarried = InventoryCountDefs(inventory.container, curSlot.Def);
 
                         // Add currently equipped gun
                         if (pawn.equipment != null && pawn.equipment.Primary != null)
@@ -142,7 +158,7 @@ namespace Combat_Realism
                     {
                         return true;
                     }
-                    int numContained = inventory.container.Count(t => t.GetInnerIfMinified().def == thing.def);
+                    int numContained = InventoryCountDefs(inventory.container, thing.def);
 
                     // Add currently equipped gun
                     if (pawn.equipment != null && pawn.equipment.Primary != null)
@@ -173,7 +189,7 @@ namespace Combat_Realism
                 // Find and drop excess items
                 foreach (LoadoutSlot slot in loadout.Slots)
                 {
-                    int numContained = inventory.container.Count(t => t.GetInnerIfMinified().def == slot.Def);
+                	int numContained = InventoryCountDefs(inventory.container, slot.Def);
 
                     // Add currently equipped gun
                     if (pawn.equipment != null && pawn.equipment.Primary != null)
@@ -242,7 +258,7 @@ namespace Combat_Realism
                         return new Job(JobDefOf.Equip, closestThing);
                     }
                     // Take items into inventory if needed
-                    int numContained = inventory.container.Count(t => t.GetInnerIfMinified().def == prioritySlot.Def);
+                    int numContained = InventoryCountDefs(inventory.container, prioritySlot.Def);
                     return new Job(JobDefOf.TakeInventory, closestThing) { count = Mathf.Min(closestThing.stackCount, prioritySlot.Count - numContained, count) };
                 }
             }
