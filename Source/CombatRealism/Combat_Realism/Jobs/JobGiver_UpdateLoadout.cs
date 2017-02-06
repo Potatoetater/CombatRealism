@@ -41,6 +41,21 @@ namespace Combat_Realism
 
             return 9.2f;
         }
+        
+        /* InventoryCountDefs
+         * If the ThingDef is minifiable, search the container for how many minified objects are contained.
+		 * fallback to TotalStackCountOfDef for non-minifiable things.
+		 */
+        private int InventoryCountDefs(ThingContainer container, ThingDef def) {
+			int count = 0;
+			if (def.Minifiable)
+			{
+				count = container.Count(t => t.GetInnerIfMinified().def == def);
+			} else {
+				count = container.TotalStackCountOfDef(def);
+			}
+			return count;
+        }
 
         private LoadoutSlot GetPrioritySlot(Pawn pawn, out ItemPriority priority, out Thing closestThing, out int count)
         {
@@ -59,7 +74,8 @@ namespace Combat_Realism
                     {
                         ItemPriority curPriority = ItemPriority.None;
                         Thing curThing = null;
-                        int numCarried = inventory.container.TotalStackCountOfDef(curSlot.Def);
+                        
+                        int numCarried = InventoryCountDefs(inventory.container, curSlot.Def);
 
                         // Add currently equipped gun
                         if (pawn.equipment != null && pawn.equipment.Primary != null)
@@ -71,22 +87,22 @@ namespace Combat_Realism
                             curThing = GenClosest.ClosestThingReachable(
                                 pawn.Position,
                                 pawn.Map,
-                                ThingRequest.ForDef(curSlot.Def),
+                                curSlot.Def.Minifiable ? ThingRequest.ForGroup(ThingRequestGroup.MinifiedThing) : ThingRequest.ForDef(curSlot.Def),
                                 PathEndMode.ClosestTouch,
                                 TraverseParms.For(pawn, Danger.None, TraverseMode.ByPawn),
                                 proximitySearchRadius,
-                                x => !x.IsForbidden(pawn) && pawn.CanReserve(x));
+                                x => !x.def.Minifiable && x.GetInnerIfMinified().def == curSlot.Def && !x.IsForbidden(pawn) && pawn.CanReserve(x));
                             if (curThing != null) curPriority = ItemPriority.Proximity;
                             else
                             {
                                 curThing = GenClosest.ClosestThingReachable(
                                     pawn.Position, 
                                     pawn.Map,
-                                    ThingRequest.ForDef(curSlot.Def),
+                                    curSlot.Def.Minifiable ? ThingRequest.ForGroup(ThingRequestGroup.MinifiedThing) : ThingRequest.ForDef(curSlot.Def),
                                     PathEndMode.ClosestTouch,
                                     TraverseParms.For(pawn, Danger.None, TraverseMode.ByPawn),
                                     maximumSearchRadius,
-                                    x => !x.IsForbidden(pawn) && pawn.CanReserve(x));
+                                    x => !x.def.Minifiable && x.GetInnerIfMinified().def == curSlot.Def && !x.IsForbidden(pawn) && pawn.CanReserve(x));
                                 if (curThing != null)
                                 {
                                     if (!curSlot.Def.IsNutritionGivingIngestible && numCarried / curSlot.Count <= 0.5f) curPriority = ItemPriority.LowStock;
@@ -126,7 +142,7 @@ namespace Combat_Realism
             }
             // Check to see if there is at least one loadout slot specifying currently equipped weapon
             ThingWithComps equipment = ((pawn.equipment == null) ? null : pawn.equipment.Primary) ?? null;
-            if (equipment != null && !loadout.Slots.Any(slot => slot.Def == equipment.def && slot.Count >= 1))
+            if (equipment != null && !loadout.Slots.Any(slot => slot.Def == equipment.GetInnerIfMinified().def && slot.Count >= 1))
             {
                 return true;
             }
@@ -142,7 +158,7 @@ namespace Combat_Realism
                     {
                         return true;
                     }
-                    int numContained = inventory.container.TotalStackCountOfDef(thing.def);
+                    int numContained = InventoryCountDefs(inventory.container, thing.def);
 
                     // Add currently equipped gun
                     if (pawn.equipment != null && pawn.equipment.Primary != null)
@@ -173,7 +189,7 @@ namespace Combat_Realism
                 // Find and drop excess items
                 foreach (LoadoutSlot slot in loadout.Slots)
                 {
-                    int numContained = inventory.container.TotalStackCountOfDef(slot.Def);
+                	int numContained = InventoryCountDefs(inventory.container, slot.Def);
 
                     // Add currently equipped gun
                     if (pawn.equipment != null && pawn.equipment.Primary != null)
@@ -186,7 +202,7 @@ namespace Combat_Realism
                     // Drop excess items
                     if(numContained > slot.Count)
                     {
-                        Thing thing = inventory.container.FirstOrDefault(x => x.def == slot.Def);
+                    	Thing thing = inventory.container.FirstOrDefault(x => x.GetInnerIfMinified().def == slot.Def);
                         if (thing != null)
                         {
                             Thing droppedThing;
@@ -216,7 +232,7 @@ namespace Combat_Realism
                 bool allowDropRaw = Find.TickManager.TicksGame > pawn.mindState?.lastInventoryRawFoodUseTick + ticksBeforeDropRaw;
                 Thing thingToRemove = inventory.container.FirstOrDefault(t => 
                     (allowDropRaw || !t.def.IsNutritionGivingIngestible || t.def.ingestible.preferability > FoodPreferability.RawTasty)
-                    && !loadout.Slots.Any(s => s.Def == t.def));
+                    && !loadout.Slots.Any(s => s.Def == t.GetInnerIfMinified().def));
                 if (thingToRemove != null)
                 {
                     Thing droppedThing;
@@ -242,7 +258,7 @@ namespace Combat_Realism
                         return new Job(JobDefOf.Equip, closestThing);
                     }
                     // Take items into inventory if needed
-                    int numContained = inventory.container.TotalStackCountOfDef(prioritySlot.Def);
+                    int numContained = InventoryCountDefs(inventory.container, prioritySlot.Def);
                     return new Job(JobDefOf.TakeInventory, closestThing) { count = Mathf.Min(closestThing.stackCount, prioritySlot.Count - numContained, count) };
                 }
             }

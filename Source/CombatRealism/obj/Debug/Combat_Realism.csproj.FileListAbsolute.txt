@@ -15,3 +15,14 @@ C:\Program Files (x86)\Steam\SteamApps\common\RimWorld\Mods\CombatRealism\Source
 C:\Program Files (x86)\Steam\SteamApps\common\RimWorld\Mods\CombatRealism\Source\CombatRealism\obj\Debug\CombatRealism.dll
 C:\Program Files (x86)\Steam\SteamApps\common\RimWorld\Mods\CombatRealism\Assemblies\CombatRealism.dll
 C:\BitBucket\CR\Source\CombatRealism\obj\Debug\Combat_Realism.csprojResolveAssemblyReference.cache
+D:\Games\RimWorld1393Win\Mods\CombatRealism\Assemblies\CombatRealism.dll
+D:\Games\RimWorld1393Win\Mods\CombatRealism\Source\CombatRealism\obj\Debug\Combat_Realism.csprojResolveAssemblyReference.cache
+D:\Games\RimWorld1393Win\Mods\CombatRealism\Source\CombatRealism\obj\Debug\CombatRealism.dll
+D:\Games\RimWorld1393Win\Mods\CombatRealism\Source\CombatRealism\Assemblies\CombatRealism.dll
+D:\Games\RimWorld1393Win\Mods\CombatRealism\Source\CombatRealism\Assemblies\Assembly-CSharp.dll
+D:\Games\RimWorld1393Win\Mods\CombatRealism\Source\CombatRealism\Assemblies\Community Core Library.dll
+D:\Games\RimWorld1393Win\Mods\CombatRealism\Source\CombatRealism\Assemblies\UnityEngine.dll
+D:\Games\RimWorld1393Win\Mods\CombatRealism\Source\CombatRealism\Assemblies\Assembly-CSharp-firstpass.dll
+D:\Games\RimWorld1393Win\Mods\CombatRealism\Source\CombatRealism\Assemblies\NAudio.dll
+D:\Games\RimWorld1393Win\Mods\CombatRealism\Source\CombatRealism\Assemblies\NVorbis.dll
+D:\Games\RimWorld1393Win\Mods\CombatRealism\Source\CombatRealism\Assemblies\UnityEngine.xml
