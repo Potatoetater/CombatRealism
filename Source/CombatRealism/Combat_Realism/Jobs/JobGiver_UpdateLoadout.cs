@@ -91,7 +91,11 @@ namespace Combat_Realism
                                 PathEndMode.ClosestTouch,
                                 TraverseParms.For(pawn, Danger.None, TraverseMode.ByPawn),
                                 proximitySearchRadius,
-                                x => !x.def.Minifiable && x.GetInnerIfMinified().def == curSlot.Def && !x.IsForbidden(pawn) && pawn.CanReserve(x));
+                                x => !x.def.Minifiable 
+                                     && x.GetInnerIfMinified().def == curSlot.Def
+                                     && !x.IsForbidden(pawn)
+                                     && pawn.CanReserve(x)
+                                     && (pawn.Faction.IsPlayer && x.def.IsNutritionGivingIngestible && !x.GetRoom().isPrisonCell));
                             if (curThing != null) curPriority = ItemPriority.Proximity;
                             else
                             {
@@ -102,7 +106,10 @@ namespace Combat_Realism
                                     PathEndMode.ClosestTouch,
                                     TraverseParms.For(pawn, Danger.None, TraverseMode.ByPawn),
                                     maximumSearchRadius,
-                                    x => !x.def.Minifiable && x.GetInnerIfMinified().def == curSlot.Def && !x.IsForbidden(pawn) && pawn.CanReserve(x));
+                                    x => !x.def.Minifiable
+                                         && x.GetInnerIfMinified().def == curSlot.Def
+                                         && !x.IsForbidden(pawn) && pawn.CanReserve(x)
+                                         && (pawn.Faction.IsPlayer && x.def.IsNutritionGivingIngestible && !x.GetRoom().isPrisonCell));
                                 if (curThing != null)
                                 {
                                     if (!curSlot.Def.IsNutritionGivingIngestible && numCarried / curSlot.Count <= 0.5f) curPriority = ItemPriority.LowStock;
