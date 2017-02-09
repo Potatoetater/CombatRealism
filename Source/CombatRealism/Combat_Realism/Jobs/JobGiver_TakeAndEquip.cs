@@ -256,8 +256,8 @@ namespace Combat_Realism
                         Predicate<Thing> validatorWS = (Thing w) => w.def.IsWeapon
                         && w.MarketValue > 500 && pawn.CanReserve(w, 1)
                         && pawn.CanReach(w, PathEndMode.Touch, Danger.Deadly, true)
-                        && (!pawn.Faction.HostileTo(Faction.OfPlayer) && pawn.Map.areaManager.Home[w.Position]) || (pawn.Faction.HostileTo(Faction.OfPlayer))
-                        && (w.Position.DistanceToSquared(pawn.Position) < 15f || room == RoomQuery.RoomAtFast(w.Position, pawn.Map));
+                        && ((!pawn.Faction.HostileTo(Faction.OfPlayer) && pawn.Map.areaManager.Home[w.Position]) || (pawn.Faction.HostileTo(Faction.OfPlayer))
+                        	    && (w.Position.DistanceToSquared(pawn.Position) < 15f || room == RoomQuery.RoomAtFast(w.Position, pawn.Map)));
                         List<Thing> weapon = (
                             from w in pawn.Map.listerThings.ThingsInGroup(ThingRequestGroup.HaulableAlways)
                             where validatorWS(w)
