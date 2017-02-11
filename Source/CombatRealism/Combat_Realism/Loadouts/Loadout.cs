@@ -80,7 +80,13 @@ namespace Combat_Realism
 
         public void AddSlot(LoadoutSlot slot)
         {
-            _slots.Add(slot);
+        	LoadoutSlot found = _slots.FirstOrDefault(s => s.Def == slot.Def);
+        	if (found != null)
+        	{
+        		found.Count++;
+        	} else {
+	            _slots.Add(slot);
+        	}
         }
 
         public void ExposeData()
