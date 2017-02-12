@@ -314,7 +314,7 @@ namespace Combat_Realism
             switch (source)
             {
                 case SourceSelection.Ranged:
-                    _source = _source.Where(td => td.IsRangedWeapon).ToList();
+                    _source = _source.Where(td => td.IsRangedWeapon && !td.menuHidden).ToList();
                     _sourceType = SourceSelection.Ranged;
                     break;
 
