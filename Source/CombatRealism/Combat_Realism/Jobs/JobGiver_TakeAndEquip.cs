@@ -118,7 +118,7 @@ namespace Combat_Realism
             else return 0f;
         }
 
-        protected override Job TryGiveJob(Pawn pawn)
+		protected override Job TryGiveJob(Pawn pawn)
         {
             if (!pawn.RaceProps.Humanlike || (pawn.story != null && pawn.story.WorkTagIsDisabled(WorkTags.Violent)))
             {
@@ -256,66 +256,90 @@ namespace Combat_Realism
                         Predicate<Thing> validatorWS = (Thing w) => w.def.IsWeapon
                         && w.MarketValue > 500 && pawn.CanReserve(w, 1)
                         && pawn.CanReach(w, PathEndMode.Touch, Danger.Deadly, true)
-                        && (!pawn.Faction.HostileTo(Faction.OfPlayer) && pawn.Map.areaManager.Home[w.Position]) || (pawn.Faction.HostileTo(Faction.OfPlayer))
-                        && (w.Position.DistanceToSquared(pawn.Position) < 15f || room == RoomQuery.RoomAtFast(w.Position, pawn.Map));
+                        && ((!pawn.Faction.HostileTo(Faction.OfPlayer) && pawn.Map.areaManager.Home[w.Position]) || (pawn.Faction.HostileTo(Faction.OfPlayer))
+                        	    && (w.Position.DistanceToSquared(pawn.Position) < 15f || room == RoomQuery.RoomAtFast(w.Position, pawn.Map)));
                         List<Thing> weapon = (
                             from w in pawn.Map.listerThings.ThingsInGroup(ThingRequestGroup.HaulableAlways)
                             where validatorWS(w)
+							where w.def.IsRangedWeapon // added this since what we are doing with the weapon list is looking for ammo.
                             orderby w.MarketValue - w.Position.DistanceToSquared(pawn.Position) * 2f descending
                             select w
                             ).ToList();
-                        if (weapon != null && weapon.Count > 0)
-                        {
-                            foreach (Thing thing in weapon)
-                            {
-                                List<ThingDef> thingDefAmmoList = (from ThingDef g in thing.TryGetComp<CompAmmoUser>().Props.ammoSet.ammoTypes
-                                                                   select g).ToList<ThingDef>();
-                                Predicate<Thing> validatorA = (Thing t) => t.def.category == ThingCategory.Item
-                                && t is AmmoThing && pawn.CanReserve(t, 1)
-                                && pawn.CanReach(t, PathEndMode.Touch, Danger.Deadly, true)
-                                && (t.Position.DistanceToSquared(pawn.Position) < 20f || room == RoomQuery.RoomAtFast(t.Position, pawn.Map));
-                                List<Thing> thingAmmoList = (
-                                    from t in pawn.Map.listerThings.ThingsInGroup(ThingRequestGroup.HaulableAlways)
-                                    where validatorA(t)
-                                    select t
-                                    ).ToList();
-                                if (thingAmmoList.Count > 0 && thingDefAmmoList.Count > 0)
-                                {
-                                    foreach (Thing th in thingAmmoList)
-                                    {
-                                        foreach (ThingDef thd in thingDefAmmoList)
-                                        {
-                                            if (thd == th.def)
-                                            {
-                                                int ammothingcount = 0;
-                                                foreach (ThingDef ammoDef in thing.TryGetComp<CompAmmoUser>().Props.ammoSet.ammoTypes)
-                                                {
-                                                    ammothingcount += th.stackCount;
-                                                }
-                                                if (ammothingcount > thing.TryGetComp<CompAmmoUser>().Props.magazineSize * 2)
-                                                {
-                                                    int numToThing = 0;
-                                                    if (inventory.CanFitInInventory(thing, out numToThing))
-                                                    {
-                                                        if (thing.Position == pawn.Position || thing.Position.AdjacentToCardinal(pawn.Position))
-                                                        {
-                                                            return new Job(JobDefOf.Equip, thing)
-                                                            {
-                                                                checkOverrideOnExpire = true,
-                                                                expiryInterval = 100,
-                                                                canBash = true,
-                                                                locomotionUrgency = LocomotionUrgency.Sprint
-                                                            };
-                                                        }
-                                                        return GotoForce(pawn, thing, PathEndMode.Touch);
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
+						if (weapon != null && weapon.Count > 0)
+						{
+							foreach (Thing thing in weapon)
+							{
+								List<ThingDef> thingDefAmmoList = (from ThingDef g in thing.TryGetComp<CompAmmoUser>().Props.ammoSet.ammoTypes
+																   select g).ToList<ThingDef>();
+								Predicate<Thing> validatorA = (Thing t) => t.def.category == ThingCategory.Item
+								&& t is AmmoThing && pawn.CanReserve(t, 1)
+								&& pawn.CanReach(t, PathEndMode.Touch, Danger.Deadly, true)
+								&& (t.Position.DistanceToSquared(pawn.Position) < 20f || room == RoomQuery.RoomAtFast(t.Position, pawn.Map));
+								List<Thing> thingAmmoList = (
+									from t in pawn.Map.listerThings.ThingsInGroup(ThingRequestGroup.HaulableAlways)
+									where validatorA(t)
+									select t
+									).ToList();
+								if (thingAmmoList.Count > 0 && thingDefAmmoList.Count > 0)
+								{
+									foreach (Thing th in thingAmmoList)
+									{
+										foreach (ThingDef thd in thingDefAmmoList)
+										{
+											if (thd == th.def)
+											{
+												int ammothingcount = 0;
+												foreach (ThingDef ammoDef in thing.TryGetComp<CompAmmoUser>().Props.ammoSet.ammoTypes)
+												{
+													ammothingcount += th.stackCount;
+												}
+												if (ammothingcount > thing.TryGetComp<CompAmmoUser>().Props.magazineSize * 2)
+												{
+													int numToThing = 0;
+													if (inventory.CanFitInInventory(thing, out numToThing))
+													{
+														if (thing.Position == pawn.Position || thing.Position.AdjacentToCardinal(pawn.Position))
+														{
+															return new Job(JobDefOf.Equip, thing)
+															{
+																checkOverrideOnExpire = true,
+																expiryInterval = 100,
+																canBash = true,
+																locomotionUrgency = LocomotionUrgency.Sprint
+															};
+														}
+														return GotoForce(pawn, thing, PathEndMode.Touch);
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+						// else if we didn't find a ranged weapon with available ammo above, lets try a melee weapon.
+						Thing meleeWeapon = (
+							from w in pawn.Map.listerThings.ThingsInGroup(ThingRequestGroup.HaulableAlways)
+							where validatorWS(w)
+							where !w.def.IsRangedWeapon // Looking for non-ranged weapons.
+							where w.def.IsMeleeWeapon // Make sure it's melee capable.
+							orderby w.MarketValue - w.Position.DistanceToSquared(pawn.Position) * 2f descending
+							select w
+							).FirstOrDefault();
+						if (meleeWeapon != null)
+						{
+							if (meleeWeapon.Position == pawn.Position || meleeWeapon.Position.AdjacentToCardinal(pawn.Position))
+							{
+								return new Job(JobDefOf.Equip, meleeWeapon)
+								{
+									checkOverrideOnExpire = true,
+									expiryInterval = 100,
+									canBash = true,
+									locomotionUrgency = LocomotionUrgency.Sprint
+								};
+							}
+							return GotoForce(pawn, meleeWeapon, PathEndMode.Touch);
+						}
                     }
                 }
                 // Find ammo
